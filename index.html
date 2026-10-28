@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>五子棋 · Gomoku — 与不同难度的 AI 对弈</title>
+  <meta name="description" content="一个开箱即用的在线五子棋：入门到宗师六档 AI、悔棋提示、棋谱回放，还能把整盘棋通过链接分享给朋友。" />
+  <meta name="theme-color" content="#f5ead8" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23d8b985'/%3E%3Ccircle cx='24' cy='24' r='13' fill='%231d1d1f'/%3E%3Ccircle cx='40' cy='40' r='13' fill='%23f7f4ee' stroke='%23999' stroke-width='2'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <!-- 顶栏 -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-stones" aria-hidden="true">
+          <span class="brand-stone hard"></span>
+          <span class="brand-stone soft"></span>
+        </span>
+        <div class="brand-text">
+          <h1 class="brand-title">五子棋</h1>
+          <span class="brand-sub">GOMOKU · 人机对弈</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="btn-sound" type="button" aria-label="音效开关" aria-pressed="true" title="音效开关">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+            <path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7" />
+            <path class="wave" d="M18.5 6a9 9 0 0 1 0 12" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="btn-theme" type="button" aria-label="切换深浅色主题" title="切换主题">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.2" />
+            <path d="M12 2.4v2.2M12 19.4v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6" />
+          </svg>
+        </button>
+        <button class="btn btn-share" id="btn-share" type="button" title="分享这盘棋">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="18" cy="5" r="2.6" /><circle cx="6" cy="12" r="2.6" /><circle cx="18" cy="19" r="2.6" />
+            <path d="m8.4 10.8 7.2-4.2M8.4 13.2l7.2 4.2" />
+          </svg>
+          <span>分享</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 主体 -->
+    <main class="layout">
+      <!-- 棋盘 -->
+      <section class="board-panel" aria-label="棋盘区域">
+        <div class="board-stage" id="board-stage">
+          <div class="board-frame">
+            <canvas id="board" class="board" role="img" aria-label="五子棋棋盘，15 乘 15"></canvas>
+            <div class="board-badge" id="thinking-badge" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <span id="thinking-text">AI 思考中</span>
+            </div>
+          </div>
+
+          <div class="players-strip">
+            <div class="player-card" id="player-black">
+              <span class="stone-stack" aria-hidden="true"><span class="stone-swatch black"></span></span>
+              <span class="player-meta">
+                <strong class="player-name" id="name-black">你</strong>
+                <small class="player-side">黑棋 · 先手</small>
+              </span>
+              <span class="turn-pill" aria-hidden="true">行棋</span>
+            </div>
+            <span class="vs" aria-hidden="true">VS</span>
+            <div class="player-card" id="player-white">
+              <span class="stone-stack" aria-hidden="true"><span class="stone-swatch white"></span></span>
+              <span class="player-meta">
+                <strong class="player-name" id="name-white">普通 AI</strong>
+                <small class="player-side">白棋 · 后手</small>
+              </span>
+              <span class="turn-pill" aria-hidden="true">行棋</span>
+            </div>
+          </div>
+          <p class="board-caption" id="board-caption">黑方先行 · 点击棋盘落子</p>
+        </div>
+      </section>
+
+      <!-- 侧栏 -->
+      <aside class="side-panel">
+        <section class="card status-card">
+          <div class="status-top">
+            <span class="status-badge" id="status-badge">对局中</span>
+            <span class="status-moves" id="status-moves">第 0 手</span>
+          </div>
+          <p class="status-main" id="status-main">轮到你落子</p>
+          <p class="status-sub" id="status-sub">执黑 · 你</p>
+          <div class="thinking" id="thinking" hidden>
+            <span class="spinner" aria-hidden="true"></span>
+            <span>AI 思考中…</span>
+            <span class="thinking-time" id="thinking-time"></span>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">
+            AI 难度
+            <span class="card-tag" id="difficulty-tag">普通</span>
+          </h2>
+          <div class="difficulty-grid" id="difficulty-list" role="radiogroup" aria-label="AI 难度选择"></div>
+          <p class="hint-text" id="difficulty-desc">攻守均衡，会算到两三步之后，适合大多数玩家。</p>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">对局设置</h2>
+          <div class="setting-row">
+            <span class="setting-label">模式</span>
+            <div class="segmented" id="mode-switch">
+              <button type="button" class="seg is-active" data-mode="pve">人机对战</button>
+              <button type="button" class="seg" data-mode="pvp">双人同屏</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">执子</span>
+            <div class="segmented" id="color-switch">
+              <button type="button" class="seg is-active" data-color="1">我执黑</button>
+              <button type="button" class="seg" data-color="2">我执白</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2 class="card-title">操作</h2>
+          <div class="action-grid">
+            <button class="btn btn-primary" id="btn-new" type="button">新对局</button>
+            <button class="btn" id="btn-undo" type="button">悔棋</button>
+            <button class="btn" id="btn-hint" type="button">提示</button>
+            <button class="btn btn-ghost" id="btn-resign" type="button">认输</button>
+          </div>
+          <p class="kbd-hint"><kbd>U</kbd> 悔棋 · <kbd>H</kbd> 提示 · <kbd>N</kbd> 新局 · <kbd>S</kbd> 分享</p>
+        </section>
+
+        <section class="card move-card">
+          <h2 class="card-title">
+            棋谱
+            <button class="text-btn" id="btn-copy-moves" type="button" title="复制文字棋谱">复制</button>
+          </h2>
+          <ol class="move-list" id="move-list" aria-label="落子记录"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <span>开箱即用 · 无需登录 · 可离线打开</span>
+      <span class="footer-mid" id="engine-note">自研引擎 · Alpha-Beta + 威胁搜索</span>
+      <span>把链接发给朋友即可分享这盘棋</span>
+    </footer>
+  </div>
+
+  <!-- 回放控制条 -->
+  <div class="replay-bar" id="replay-bar" hidden>
+    <span class="replay-label" id="replay-label">回放 0 / 0</span>
+    <div class="replay-buttons">
+      <button class="icon-btn" id="btn-replay-first" type="button" aria-label="回到开头">⏮</button>
+      <button class="icon-btn" id="btn-replay-prev" type="button" aria-label="上一步">◀</button>
+      <button class="icon-btn" id="btn-replay-next" type="button" aria-label="下一步">▶</button>
+      <button class="icon-btn" id="btn-replay-last" type="button" aria-label="跳到最后">⏭</button>
+    </div>
+    <button class="btn btn-sm" id="btn-replay-exit" type="button">退出回放</button>
+  </div>
+
+  <!-- 结算浮层 -->
+  <div class="result-overlay" id="result-overlay" hidden>
+    <div class="result-card" role="dialog" aria-modal="true" aria-labelledby="result-title">
+      <div class="result-emoji" id="result-emoji" aria-hidden="true">🎉</div>
+      <h2 class="result-title" id="result-title">你赢了</h2>
+      <p class="result-desc" id="result-desc"></p>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-again" type="button">再来一局</button>
+        <button class="btn" id="btn-result-review" type="button">回放这盘</button>
+        <button class="btn btn-ghost" id="btn-result-close" type="button">看看棋盘</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分享弹窗 -->
+  <dialog class="dialog" id="share-dialog" aria-labelledby="share-title">
+    <div class="dialog-inner">
+      <header class="dialog-head">
+        <h2 class="dialog-title" id="share-title">分享这盘棋</h2>
+        <button class="icon-btn" id="btn-share-close" type="button" aria-label="关闭">✕</button>
+      </header>
+      <p class="dialog-note">链接里带着完整棋谱：朋友打开即可看到当前局面，也能从这盘棋继续下。</p>
+      <label class="field-label" for="share-link">对局链接</label>
+      <div class="share-link-row">
+        <input class="share-input" id="share-link" type="text" readonly />
+        <button class="btn btn-primary" id="btn-copy-link" type="button">复制</button>
+      </div>
+      <div class="share-actions">
+        <button class="btn" id="btn-share-native" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3v12M8 7l4-4 4 4" /><path d="M4 13v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />
+          </svg>
+          系统分享
+        </button>
+        <button class="btn" id="btn-save-image" type="button">保存对局图片</button>
+        <button class="btn" id="btn-share-text" type="button">复制文字棋谱</button>
+      </div>
+      <p class="dialog-tip" id="share-tip">提示：把网站部署到任意静态托管（GitHub Pages / Netlify / Vercel）后，这个链接就能被任何人打开。</p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <noscript><p class="noscript">这个五子棋需要启用 JavaScript 才能运行。</p></noscript>
+
+  <script src="js/core.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
